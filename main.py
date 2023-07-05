@@ -2,10 +2,18 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from PIL import ImageFont, ImageDraw, Image
 from io import BytesIO
+from dotenv import load_dotenv
 import numpy as np
 import requests
 import cv2
+import os
 
+# load environment variables
+load_dotenv()
+API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
+    else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
+
+# init
 app = FastAPI()
 fontTitle = ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 60)
 fontDate = ImageFont.truetype("fonts/NanumSquare_acB.ttf", 30)
@@ -20,7 +28,7 @@ def defaultImage():
 async def mainHandler(roomId: str = "647ac989fe1dbfb2b9408ff9"):
     try:
         # get room information
-        res = requests.get("https://taxi.sparcs.org/api/rooms/publicInfo?id={}".format(roomId))
+        res = requests.get(API_ROOM_INFO.format(roomId))
         if res.status_code != 200:
             raise ValueError("mainHandler : Invalid roomId")
         roomInfo = res.json()

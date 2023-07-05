@@ -1,6 +1,6 @@
 fastapi==0.68.0
 uvicorn==0.15.0
-# python-dotenv
+python-dotenv
 numpy
 opencv-python==4.7.0.68
 Pillow==9.1.1

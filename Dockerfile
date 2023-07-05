@@ -11,6 +11,9 @@ RUN apt-get update && \
 # Install python dependencies
 RUN pip install -r requirements.txt
 
+# Set environment variables
+ENV API_ROOM_INFO https://taxi.sparcs.org/api/rooms/publicInfo?id={}
+
 # Run container
 EXPOSE 80
 CMD ["python", "-m", "uvicorn", "main:app", "--port", "80", "--host", "0.0.0.0"]
