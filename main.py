@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from PIL import ImageFont, ImageDraw, Image
 from io import BytesIO
 from dotenv import load_dotenv
+import datetime
 import numpy as np
 import requests
 import cv2
@@ -13,15 +14,49 @@ load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
 
-# init
+# initialization
 app = FastAPI()
-fontTitle = ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 60)
-fontDate = ImageFont.truetype("fonts/NanumSquare_acB.ttf", 30)
-colorWhite = (255, 255, 255, 1)
+images = {
+    "background": cv2.imread("images/og.background.png"),
+    "default": cv2.imread("images/og.default.png"),
+    "arrow.type1": cv2.imread("images/arrow.type1.png"),
+    "arrow.type2": cv2.imread("images/arrow.type2.png"),
+}
+fonts = {
+    "type1": {
+        "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 96),
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 48),
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 48),
+    },
+    "type2": {
+        "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40),
+    },
+}
+colors = {
+    "purple": (110, 54, 120, 1),
+    "black": (50, 50, 50, 1),
+}
+
+def date2text(date):
+    date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+    date += datetime.timedelta(hours=9) # kst
+    return "{}년 {}월 {}일 {}요일 {} {}".format(
+        date.year,
+        date.month,
+        date.day,
+        ["월", "화", "수", "목", "금", "토", "일"][date.weekday()],
+        "오전" if date.strftime("%p") == "AM" else "오후",
+        date.strftime("%-I:%M"),
+    )
+
+def predictWidth(draw, text, font):
+    width, _ = draw.textsize(text, font=font)
+    return width
 
 def defaultImage():
-    img = cv2.imread("graph.back.png")
-    res, im_png = cv2.imencode(".png", img)
+    _, im_png = cv2.imencode(".png", images["default"])
     return StreamingResponse(BytesIO(im_png.tobytes()), media_type="image/png")
 
 @app.get("/{roomId}")
@@ -32,22 +67,61 @@ async def mainHandler(roomId: str = "647ac989fe1dbfb2b9408ff9"):
         if res.status_code != 200:
             raise ValueError("mainHandler : Invalid roomId")
         roomInfo = res.json()
+
+        # convert room information to text
+        text = {
+            "from": roomInfo["from"]["koName"],
+            "to": roomInfo["to"]["koName"],
+            "date": date2text(roomInfo["time"]),
+            "name": roomInfo["name"],
+        }
         
         # load background image
-        img = Image.fromarray(cv2.imread("graph.png"))
-        draw = ImageDraw.Draw(img, 'RGBA')
+        img_og = Image.fromarray(images["background"])
+        draw = ImageDraw.Draw(img_og, 'RGBA')
+
+        # select draw type
+        print(predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]))
+        draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 else "type2"
         
-        # draw Location
-        draw.text((50, 50), '{} → {}'.format(roomInfo["from"]["koName"], roomInfo["to"]["koName"]), font=fontTitle, fill=colorWhite)
+        # draw location
+        draw.text((52, 52), text["from"], font=fonts[draw_type]["title"], fill=colors["purple"])
+        widthFrom = predictWidth(draw, text["from"], fonts[draw_type]["title"])
+        draw.text(
+            (52 + 20 + 96 + widthFrom, 52) if draw_type == "type1" else (172, 166),
+            text["to"],
+            font=fonts[draw_type]["title"], fill=colors["purple"]
+        )
 
-        # draw Date
-        draw.text((50, 150), '{}'.format(roomInfo["time"]), font=fontDate, fill=colorWhite)
+        # draw arrow
+        img_arrow = Image.fromarray(images["arrow.{}".format(draw_type)]).convert('RGBA')
+        img_og.paste(
+            img_arrow,
+            (52 + 10 + widthFrom, 52) if draw_type == "type1" else (52, 160)
+        )
 
-        # draw Name
-        draw.text((50, 200), '{}'.format(roomInfo["name"]), font=fontDate, fill=colorWhite)
+        # draw date
+        draw.text(
+            (52, 189) if draw_type == "type1" else (52, 280), text["date"],
+            font=fonts[draw_type]["date"],
+            fill=colors["black"]
+        )
+
+        # ellipsis if name has long width
+        if predictWidth(draw, text["name"], fonts[draw_type]["name"]) > 700:
+            while predictWidth(draw, text["name"] + "...", fonts[draw_type]["name"]) > 700:
+                text["name"] = text["name"][:-1]
+            text["name"] += "..."
+        
+        # draw name
+        draw.text((52, 392) if draw_type == "type1" else (52, 401),
+            text["name"],
+            font=fonts[draw_type]["name"],
+            fill=colors["black"]
+        )
         
         # convert to png image
-        res, img_png = cv2.imencode(".png", np.array(img))
+        res, img_png = cv2.imencode(".png", np.array(img_og))
 
         # response
         return StreamingResponse(BytesIO(img_png.tobytes()), media_type="image/png")
