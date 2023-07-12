@@ -81,6 +81,8 @@ async def mainHandler(roomId: str = "647ac989fe1dbfb2b9408ff9"):
         draw = ImageDraw.Draw(img_og, 'RGBA')
 
         # select draw type
+        # if location text width is less than 784, use type1
+        # else, use type2
         print(predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]))
         draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 else "type2"
         
