@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import datetime
 import numpy as np
 import requests
+import locale
 import cv2
 import os
 
@@ -13,6 +14,10 @@ import os
 load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
+
+# KST timezone setting -> is it working?
+locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
+timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
 
 # initialization
 app = FastAPI()
@@ -40,7 +45,7 @@ colors = {
 }
 
 def date2text(date):
-    date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+    date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone_kst)
     date += datetime.timedelta(hours=9) # kst
     return "{}년 {}월 {}일 {}요일 {} {}".format(
         date.year,
