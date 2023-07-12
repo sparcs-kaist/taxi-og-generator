@@ -60,8 +60,11 @@ def defaultImage():
     return StreamingResponse(BytesIO(im_png.tobytes()), media_type="image/png")
 
 @app.get("/{roomId}")
-async def mainHandler(roomId: str = "647ac989fe1dbfb2b9408ff9"):
+async def mainHandler(roomId: str):
     try:
+        # if roomId ends with .png, remove it
+        if roomId.endswith(".png"): roomId = roomId[:-4]
+        
         # get room information
         res = requests.get(API_ROOM_INFO.format(roomId))
         if res.status_code != 200:
