@@ -45,8 +45,8 @@ colors = {
 }
 
 def date2text(date):
-    date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ").astimezone(timezone_kst)
-    date += datetime.timedelta(hours=9) # kst
+    print(date)
+    date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone(timezone_kst)
     return "{}년 {}월 {}일 {}요일 {} {}".format(
         date.year,
         date.month,
