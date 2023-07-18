@@ -45,7 +45,6 @@ colors = {
 }
 
 def date2text(date):
-    print(date)
     date = datetime.datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%f%z").astimezone(timezone_kst)
     return "{}년 {}월 {}일 {}요일 {} {}".format(
         date.year,
@@ -91,7 +90,6 @@ async def mainHandler(roomId: str):
         # select draw type
         # if location text width is less than 784, use type1
         # else, use type2
-        print(predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]))
         draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 else "type2"
         
         # draw location
