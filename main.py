@@ -15,8 +15,7 @@ load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
 
-# KST timezone setting -> is it working?
-locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
+# KST timezone setting
 timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
 
 # initialization
