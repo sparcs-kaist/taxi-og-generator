@@ -23,8 +23,9 @@ app = FastAPI()
 images = {
     "background": cv2.imread("images/og.background.png"),
     "default": cv2.imread("images/og.default.png"),
-    "arrow.type1": cv2.imread("images/arrow.type1.png"),
-    "arrow.type2": cv2.imread("images/arrow.type2.png"),
+    "arrow.type1": cv2.imread("images/arrow.png"),
+    "arrow.type2": cv2.imread("images/arrow.png"),
+    "arrow.type3": cv2.imread("images/arrow.png"),
 }
 fonts = {
     "type1": {
@@ -97,8 +98,6 @@ async def mainHandler(roomId: str):
         draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 \
             else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
             else "type3"
-
-        print(predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) )
         
         # draw location
         draw.text((52, 52), text["from"], font=fonts[draw_type]["title"], fill=colors["purple"])
