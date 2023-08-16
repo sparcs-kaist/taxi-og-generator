@@ -15,8 +15,7 @@ load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
 
-# KST timezone setting -> is it working?
-locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
+# KST timezone setting
 timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
 
 # initialization
@@ -24,8 +23,9 @@ app = FastAPI()
 images = {
     "background": cv2.imread("images/og.background.png"),
     "default": cv2.imread("images/og.default.png"),
-    "arrow.type1": cv2.imread("images/arrow.type1.png"),
-    "arrow.type2": cv2.imread("images/arrow.type2.png"),
+    "arrow.type1": cv2.imread("images/arrow.png"),
+    "arrow.type2": cv2.imread("images/arrow.png"),
+    "arrow.type3": cv2.imread("images/arrow.png"),
 }
 fonts = {
     "type1": {
@@ -34,6 +34,11 @@ fonts = {
         "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 48),
     },
     "type2": {
+        "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40),
+    },
+    "type3": {
         "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
         "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
         "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40),
@@ -90,13 +95,15 @@ async def mainHandler(roomId: str):
         # select draw type
         # if location text width is less than 784, use type1
         # else, use type2
-        draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 else "type2"
+        draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 \
+            else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
+            else "type3"
         
         # draw location
         draw.text((52, 52), text["from"], font=fonts[draw_type]["title"], fill=colors["purple"])
         widthFrom = predictWidth(draw, text["from"], fonts[draw_type]["title"])
         draw.text(
-            (52 + 20 + 96 + widthFrom, 52) if draw_type == "type1" else (172, 166),
+            (52 + 20 + 96 + widthFrom, 52) if draw_type == "type1" or draw_type == "type2" else (172, 166),
             text["to"],
             font=fonts[draw_type]["title"], fill=colors["purple"]
         )
@@ -105,12 +112,17 @@ async def mainHandler(roomId: str):
         img_arrow = Image.fromarray(images["arrow.{}".format(draw_type)]).convert('RGBA')
         img_og.paste(
             img_arrow,
-            (52 + 10 + widthFrom, 52) if draw_type == "type1" else (52, 160)
+            (52 + 10 + widthFrom, 52) if draw_type == "type1" \
+                else (52 + 10 + widthFrom, 52 - 7) if draw_type == "type2" \
+                else (52, 160)
         )
 
         # draw date
         draw.text(
-            (52, 189) if draw_type == "type1" else (52, 280), text["date"],
+            (52, 189) if draw_type == "type1" \
+                else (52, 150) if draw_type == "type2" \
+                else (52, 280),
+            text["date"],
             font=fonts[draw_type]["date"],
             fill=colors["black"]
         )
