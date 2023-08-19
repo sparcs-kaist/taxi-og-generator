@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import datetime
 import numpy as np
 import requests
-import locale
 import cv2
 import os
 
@@ -14,6 +13,8 @@ import os
 load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
+FRONT_URL = os.environ["FRONT_URL"] if "FRONT_URL" in os.environ \
+    else "https://taxi.sparcs.org"
 
 # KST timezone setting
 timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
@@ -75,7 +76,8 @@ async def mainHandler(roomId: str):
         if roomId.endswith(".png"): roomId = roomId[:-4]
         
         # get room information
-        res = requests.get(API_ROOM_INFO.format(roomId))
+        res = requests.get(API_ROOM_INFO.format(roomId), headers={"Origin": FRONT_URL})
+        print(res.json())
         if res.status_code != 200:
             raise ValueError("mainHandler : Invalid roomId")
         roomInfo = res.json()
