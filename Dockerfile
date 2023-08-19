@@ -13,6 +13,7 @@ RUN pip install -r requirements.txt
 
 # Set environment variables
 ENV API_ROOM_INFO https://taxi.sparcs.org/api/rooms/publicInfo?id={}
+ENV FRONT_URL https://taxi.sparcs.org
 
 # Run container
 EXPOSE 80
