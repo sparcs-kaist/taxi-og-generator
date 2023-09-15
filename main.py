@@ -23,6 +23,7 @@ timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
 app = FastAPI()
 images = {
     "background": cv2.imread("images/og.background.png"),
+    "background.event2023fall": cv2.imread("images/og.background.event2023fall.png"),
     "default": cv2.imread("images/og.default.png"),
     "arrow.type1": cv2.imread("images/arrow.png"),
     "arrow.type2": cv2.imread("images/arrow.png"),
@@ -36,13 +37,13 @@ fonts = {
     },
     "type2": {
         "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
-        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
-        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40),
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 37), # back to 40
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 37), # back to 40
     },
     "type3": {
         "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
-        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
-        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40),
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 37), # back to 40
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 37), # back to 40
     },
 }
 colors = {
@@ -77,7 +78,6 @@ async def mainHandler(roomId: str):
         
         # get room information
         res = requests.get(API_ROOM_INFO.format(roomId), headers={"Origin": FRONT_URL})
-        print(res.json())
         if res.status_code != 200:
             raise ValueError("mainHandler : Invalid roomId")
         roomInfo = res.json()
@@ -89,9 +89,11 @@ async def mainHandler(roomId: str):
             "date": date2text(roomInfo["time"]),
             "name": roomInfo["name"],
         }
+
+        event_type = "event2023fall" # remove me
         
         # load background image
-        img_og = Image.fromarray(images["background"])
+        img_og = Image.fromarray(images["background"] if event_type == None else images["background.{}".format(event_type)])
         draw = ImageDraw.Draw(img_og, 'RGBA')
 
         # select draw type
@@ -101,13 +103,17 @@ async def mainHandler(roomId: str):
             else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
             else "type3"
         
+        if event_type == "event2023fall" and draw_type == "type1":
+            draw_type = "type2"
+        
         # draw location
         draw.text((52, 52), text["from"], font=fonts[draw_type]["title"], fill=colors["purple"])
         widthFrom = predictWidth(draw, text["from"], fonts[draw_type]["title"])
         draw.text(
             (52 + 20 + 96 + widthFrom, 52) if draw_type == "type1" or draw_type == "type2" else (172, 166),
             text["to"],
-            font=fonts[draw_type]["title"], fill=colors["purple"]
+            font=fonts[draw_type]["title"],
+            fill=colors["purple"]
         )
 
         # draw arrow
@@ -130,13 +136,13 @@ async def mainHandler(roomId: str):
         )
 
         # ellipsis if name has long width
-        if predictWidth(draw, text["name"], fonts[draw_type]["name"]) > 700:
-            while predictWidth(draw, text["name"] + "...", fonts[draw_type]["name"]) > 700:
+        if predictWidth(draw, text["name"], fonts[draw_type]["name"]) > 550: # back to 700
+            while predictWidth(draw, text["name"] + "...", fonts[draw_type]["name"]) > 550: # back to 700
                 text["name"] = text["name"][:-1]
             text["name"] += "..."
         
         # draw name
-        draw.text((52, 392) if draw_type == "type1" else (52, 401),
+        draw.text((52, 392) if draw_type == "type1" else (52, 405), # back to 401
             text["name"],
             font=fonts[draw_type]["name"],
             fill=colors["black"]
