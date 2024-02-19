@@ -24,6 +24,7 @@ app = FastAPI()
 images = {
     "background": cv2.imread("images/og.background.png"),
     "background.event2023fall": cv2.imread("images/og.background.event2023fall.png"),
+    "background.event2024spring": cv2.imread("images/og.background.event2024spring.png"),
     "default": cv2.imread("images/og.default.png"),
     "arrow.type1": cv2.imread("images/arrow.png"),
     "arrow.type2": cv2.imread("images/arrow.png"),
@@ -37,13 +38,13 @@ fonts = {
     },
     "type2": {
         "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
-        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 37), # back to 40
-        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 37), # back to 40
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40), 
     },
     "type3": {
         "title": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 72),
-        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 37), # back to 40
-        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 37), # back to 40
+        "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40), 
+        "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40), 
     },
 }
 colors = {
@@ -90,7 +91,7 @@ async def mainHandler(roomId: str):
             "name": roomInfo["name"],
         }
 
-        event_type = None
+        event_type = "event2024spring" # back to None
         
         # load background image
         img_og = Image.fromarray(images["background"] if event_type == None else images["background.{}".format(event_type)])
@@ -103,7 +104,7 @@ async def mainHandler(roomId: str):
             else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
             else "type3"
         
-        if event_type == "event2023fall" and draw_type == "type1":
+        if event_type == "event2024spring" and draw_type == "type1":
             draw_type = "type2"
         
         # draw location
@@ -136,13 +137,13 @@ async def mainHandler(roomId: str):
         )
 
         # ellipsis if name has long width
-        if predictWidth(draw, text["name"], fonts[draw_type]["name"]) > 550: # back to 700
-            while predictWidth(draw, text["name"] + "...", fonts[draw_type]["name"]) > 550: # back to 700
+        if predictWidth(draw, text["name"], fonts[draw_type]["name"]) > 450: # back to 700
+            while predictWidth(draw, text["name"] + "...", fonts[draw_type]["name"]) > 450: # back to 700
                 text["name"] = text["name"][:-1]
             text["name"] += "..."
         
         # draw name
-        draw.text((52, 392) if draw_type == "type1" else (52, 405), # back to 401
+        draw.text((52, 392) if draw_type == "type1" else (52, 401), 
             text["name"],
             font=fonts[draw_type]["name"],
             fill=colors["black"]
