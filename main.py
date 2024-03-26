@@ -91,7 +91,7 @@ async def mainHandler(roomId: str):
             "name": roomInfo["name"],
         }
 
-        event_type = "event2024spring" # back to None
+        event_type = None 
         
         # load background image
         img_og = Image.fromarray(images["background"] if event_type == None else images["background.{}".format(event_type)])
