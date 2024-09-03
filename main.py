@@ -25,6 +25,8 @@ images = {
     "background": cv2.imread("images/og.background.png"),
     "background.event2023fall": cv2.imread("images/og.background.event2023fall.png"),
     "background.event2024spring": cv2.imread("images/og.background.event2024spring.png"),
+    "background.event2024fall": cv2.imread("images/og.background.event2024fall.png"),
+    "background.event2024fall.recommand": cv2.imread("images/og.background.event2024fall.recommand.png"),
     "default": cv2.imread("images/og.default.png"),
     "arrow.type1": cv2.imread("images/arrow.png"),
     "arrow.type2": cv2.imread("images/arrow.png"),
@@ -91,7 +93,7 @@ async def mainHandler(roomId: str):
             "name": roomInfo["name"],
         }
 
-        event_type = None 
+        event_type = "event2024fall"    #back to None
         
         # load background image
         img_og = Image.fromarray(images["background"] if event_type == None else images["background.{}".format(event_type)])
@@ -104,7 +106,7 @@ async def mainHandler(roomId: str):
             else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
             else "type3"
         
-        if event_type == "event2024spring" and draw_type == "type1":
+        if event_type == "event2024fall" and draw_type == "type1":  
             draw_type = "type2"
         
         # draw location
