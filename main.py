@@ -13,6 +13,8 @@ import os
 load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
+API_USER_INFO = os.environ["API_USER_INFO"] if "API_USER_INFO" in os.environ \
+    else "https://taxi.sparcs.org/api/users/publicInfo?id={}"  # TODO: need to be updated in backend side or sync the endpoint
 FRONT_URL = os.environ["FRONT_URL"] if "FRONT_URL" in os.environ \
     else "https://taxi.sparcs.org"
 
@@ -26,7 +28,7 @@ images = {
     "background.event2023fall": cv2.imread("images/og.background.event2023fall.png"),
     "background.event2024spring": cv2.imread("images/og.background.event2024spring.png"),
     "background.event2024fall": cv2.imread("images/og.background.event2024fall.png"),
-    "background.event2024fall.recommand": cv2.imread("images/og.background.event2024fall.recommand.png"),
+    "background.event2024fall.eventInvite": cv2.imread("images/og.background.event2024fall.eventInvite.png"),
     "default": cv2.imread("images/og.default.png"),
     "arrow.type1": cv2.imread("images/arrow.png"),
     "arrow.type2": cv2.imread("images/arrow.png"),
@@ -164,3 +166,42 @@ async def mainHandler(roomId: str):
     except Exception as e:
         print(e)
         return defaultImage()
+
+    @app.get("/eventInvite/{userId}")
+    async def eventInviteHandler(userId: str):
+        try:
+            # get user information
+            res = requests.get(API_USER_INFO.format(userId), headers={"Origin": FRONT_URL})
+            if res.status_code != 200:
+                raise ValueError("recommandHandler : Invalid userId")
+            userInfo = res.json()
+
+            # convert user information to text
+            text = {
+                "nickname": userInfo["nickname"],
+                "profileImageUrl": userInfo["profileImageUrl"],
+            }
+
+            event_type = "event2024fall.eventInvite"    
+
+            # load background image
+            img_og = Image.fromarray(images["background"] if event_type == None else images["background.{}".format(event_type)])
+            draw = ImageDraw.Draw(img_og, 'RGBA')
+
+            # select draw type
+            # if location text width is less than 784, use type1
+            # else, use type2
+            draw_type = "type1" if predictWidth(draw, text["from"] + text["to"], fonts["type1"]["title"]) <= 784 \
+                else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
+                else "type3"
+            
+            if event_type == "event2024fall.eventInvite" and draw_type == "type1":  
+                draw_type = "type2"
+
+            # draw nickname
+
+            # draw profile image
+
+        except ValueError as e: 
+            print(e)
+            return defaultImage()
