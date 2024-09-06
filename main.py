@@ -203,7 +203,7 @@ async def eventInviteHandler(inviterId: str):
         }
 
         # load background image
-        img_og = Image.fromarray(images["background.{}.eventInvite".format(event_type)])
+        img_og = Image.fromarray(images["background.{}.eventInvite".format(event_type)]).convert("RGBA")
         draw = ImageDraw.Draw(img_og, "RGBA")
 
         # draw nickname
