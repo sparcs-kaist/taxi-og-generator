@@ -191,6 +191,11 @@ async def eventInviteHandler(inviterId: str):
             raise ValueError("eventInviteHandler : Invalid profileImageUrl")
         img_profile = Image.open(BytesIO(res_profile.content))
 
+        # convert rgb(a) to bgr(a) format (cv2 uses bgr format)
+        img_profile_array = np.array(img_profile)
+        img_profile_array[..., :3] = img_profile_array[..., :3][..., ::-1]
+        img_profile = Image.fromarray(img_profile_array)
+
         # convert inviter information to text
         text = {
             "nickname": inviterInfo["nickname"],
@@ -214,6 +219,8 @@ async def eventInviteHandler(inviterId: str):
         draw.text((31, 140), text["message"], font=fonts["eventInvite"]["message"], fill=colors["white"])
 
         # draw profile image
+        if min(img_profile.size) > 245:
+            img_profile = img_profile.crop((0, 0, min(img_profile.size), min(img_profile.size)))
         img_profile = img_profile.resize((245, 245))
 
         scale_factor = 4 # for anti-aliasing
