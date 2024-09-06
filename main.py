@@ -13,11 +13,16 @@ import os
 load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
+API_INVITER_INFO = os.environ["API_INVITER_INFO"] if "API_INVITER_INFO" in os.environ \
+    else "https://taxi.sparcs.org/api/events/2024fall/invites/search/{}"
 FRONT_URL = os.environ["FRONT_URL"] if "FRONT_URL" in os.environ \
     else "https://taxi.sparcs.org"
 
 # KST timezone setting
 timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
+
+# event type setting
+event_type = "event2024fall" # back to None
 
 # initialization
 app = FastAPI()
@@ -25,6 +30,8 @@ images = {
     "background": cv2.imread("images/og.background.png"),
     "background.event2023fall": cv2.imread("images/og.background.event2023fall.png"),
     "background.event2024spring": cv2.imread("images/og.background.event2024spring.png"),
+    "background.event2024fall": cv2.imread("images/og.background.event2024fall.png"),
+    "background.event2024fall.eventInvite": cv2.imread("images/og.background.event2024fall.eventInvite.png"),
     "default": cv2.imread("images/og.default.png"),
     "arrow.type1": cv2.imread("images/arrow.png"),
     "arrow.type2": cv2.imread("images/arrow.png"),
@@ -46,10 +53,15 @@ fonts = {
         "date": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40), 
         "name": ImageFont.truetype("fonts/NanumSquare_acR.ttf", 40), 
     },
+    "eventInvite": {
+        "nickname": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 64),
+        "message": ImageFont.truetype("fonts/NanumSquare_acEB.ttf", 40),
+    },
 }
 colors = {
-    "purple": (110, 54, 120, 1),
-    "black": (50, 50, 50, 1),
+    "purple": (110, 54, 120),
+    "black": (50, 50, 50),
+    "white": (255, 255, 255),
 }
 
 def date2text(date):
@@ -91,11 +103,9 @@ async def mainHandler(roomId: str):
             "name": roomInfo["name"],
         }
 
-        event_type = None 
-        
         # load background image
         img_og = Image.fromarray(images["background"] if event_type == None else images["background.{}".format(event_type)])
-        draw = ImageDraw.Draw(img_og, 'RGBA')
+        draw = ImageDraw.Draw(img_og, "RGBA")
 
         # select draw type
         # if location text width is less than 784, use type1
@@ -104,7 +114,7 @@ async def mainHandler(roomId: str):
             else "type2" if predictWidth(draw, text["from"] + text["to"], fonts["type2"]["title"]) <= 784 \
             else "type3"
         
-        if event_type == "event2024spring" and draw_type == "type1":
+        if event_type == "event2024fall" and draw_type == "type1":  
             draw_type = "type2"
         
         # draw location
@@ -159,6 +169,73 @@ async def mainHandler(roomId: str):
         print(e)
         return defaultImage()
     
+    except Exception as e:
+        print(e)
+        return defaultImage()
+
+@app.get("/eventInvite/{inviterId}")
+async def eventInviteHandler(inviterId: str):
+    try:
+        if not event_type in ["event2024fall"]:
+            raise ValueError("eventInviteHandler : Invalid event_type")
+
+        # get inviter information
+        res = requests.get(API_INVITER_INFO.format(inviterId), headers={"Origin": FRONT_URL})
+        if res.status_code != 200:
+            raise ValueError("eventInviteHandler : Invalid inviterId")
+        inviterInfo = res.json()
+
+        # load profile image
+        res_profile = requests.get(inviterInfo["profileImageUrl"], headers={"Origin": FRONT_URL})
+        if res_profile.status_code != 200:
+            raise ValueError("eventInviteHandler : Invalid profileImageUrl")
+        img_profile = Image.open(BytesIO(res_profile.content))
+
+        # convert inviter information to text
+        text = {
+            "nickname": inviterInfo["nickname"],
+            "message": "님이 이벤트에 초대했습니다."
+        }
+
+        # load background image
+        img_og = Image.fromarray(images["background.{}.eventInvite".format(event_type)])
+        draw = ImageDraw.Draw(img_og, "RGBA")
+
+        # draw nickname
+        nickname = text["nickname"]
+        while predictWidth(draw, nickname, fonts["eventInvite"]["nickname"]) > 784:
+            nickname = nickname[:-1]
+        if nickname != text["nickname"]: 
+            nickname += "…"
+
+        draw.text((31, 53), nickname, font=fonts["eventInvite"]["nickname"], fill=colors["white"])
+
+        # draw message
+        draw.text((31, 140), text["message"], font=fonts["eventInvite"]["message"], fill=colors["white"])
+
+        # draw profile image
+        img_profile = img_profile.resize((245, 245))
+
+        scale_factor = 4 # for anti-aliasing
+        scaled_size = (img_profile.size[0] * scale_factor, img_profile.size[1] * scale_factor)
+
+        mask = Image.new("L", scaled_size, 0)
+        draw_mask = ImageDraw.Draw(mask)
+        draw_mask.ellipse((0, 0) + scaled_size, fill=255)
+
+        mask = mask.resize(img_profile.size, Image.LANCZOS)
+        img_og.paste(img_profile, (31, 228), mask)
+
+        # convert to png image
+        res, img_png = cv2.imencode(".png", np.array(img_og))
+
+        # response
+        return StreamingResponse(BytesIO(img_png.tobytes()), media_type="image/png")
+
+    except ValueError as e: 
+        print(e)
+        return defaultImage()
+
     except Exception as e:
         print(e)
         return defaultImage()
