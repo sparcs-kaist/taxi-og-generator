@@ -14,7 +14,7 @@ load_dotenv()
 API_ROOM_INFO = os.environ["API_ROOM_INFO"] if "API_ROOM_INFO" in os.environ \
     else "https://taxi.sparcs.org/api/rooms/publicInfo?id={}"
 API_INVITER_INFO = os.environ["API_INVITER_INFO"] if "API_INVITER_INFO" in os.environ \
-    else "https://taxi.sparcs.org/api/events/2025spring/invites/search/{}" # TODO: UPDATE HERE
+    else "https://taxi.sparcs.org/api/events/2025fall/invites/search/{}" # TODO: UPDATE HERE
 FRONT_URL = os.environ["FRONT_URL"] if "FRONT_URL" in os.environ \
     else "https://taxi.sparcs.org"
 
@@ -22,7 +22,7 @@ FRONT_URL = os.environ["FRONT_URL"] if "FRONT_URL" in os.environ \
 timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
 
 # event type setting
-event_type = None # TODO: UPDATE HERE
+event_type = "event2025fall" # TODO: UPDATE HERE
 
 # initialization
 app = FastAPI()
@@ -34,6 +34,8 @@ images = {
     "background.event2024fall.eventInvite": cv2.imread("images/og.background.event2024fall.eventInvite.png"),
     "background.event2025spring": cv2.imread("images/og.background.event2025spring.png"),
     "background.event2025spring.eventInvite": cv2.imread("images/og.background.event2025spring.eventInvite.png"),
+    "background.event2025fall": cv2.imread("images/og.background.event2025fall.png"),
+    "background.event2025fall.eventInvite": cv2.imread("images/og.background.event2025fall.eventInvite.png"),
     "default": cv2.imread("images/og.default.png"),
     "arrow.type1": cv2.imread("images/arrow.png"),
     "arrow.type2": cv2.imread("images/arrow.png"),
@@ -178,7 +180,7 @@ async def mainHandler(roomId: str):
 @app.get("/eventInvite/{inviterId}")
 async def eventInviteHandler(inviterId: str):
     try:
-        if not event_type in ["event2024fall", "event2025spring"]: # TODO: UPDATE HERE
+        if not event_type in ["event2024fall", "event2025spring", "event2025fall"]: # TODO: UPDATE HERE
             raise ValueError("eventInviteHandler : Invalid event_type")
 
         # get inviter information
