@@ -6,7 +6,7 @@ COPY . .
 
 # For OpenCV
 RUN apt-get update && \
-    apt-get -y install libgl1-mesa-glx libglib2.0-0
+    apt-get -y install libgl1 libglib2.0-0
 
 # Install python dependencies
 RUN pip install -r requirements.txt
