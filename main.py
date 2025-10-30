@@ -22,7 +22,7 @@ FRONT_URL = os.environ["FRONT_URL"] if "FRONT_URL" in os.environ \
 timezone_kst = datetime.timezone(datetime.timedelta(hours = 9))
 
 # event type setting
-event_type = "None" # TODO: UPDATE HERE
+event_type = None # TODO: UPDATE HERE
 
 # initialization
 app = FastAPI()
